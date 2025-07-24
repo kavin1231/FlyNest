@@ -1,0 +1,25 @@
+{
+  "name": "airbackend",
+  "version": "1.0.0",
+  "description": "air ticket booking app",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kavin1231/airbackend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kavin1231/airbackend/issues"
+  },
+  "homepage": "https://github.com/kavin1231/airbackend#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
