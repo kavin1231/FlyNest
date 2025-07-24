@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kavin1231/airbackend.git"
+    "url": "git+https://github.com/kavin1231/FlyNest.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/kavin1231/airbackend/issues"
+    "url": "https://github.com/kavin1231/FlyNest/issues"
   },
-  "homepage": "https://github.com/kavin1231/airbackend#readme",
+  "homepage": "https://github.com/kavin1231/FlyNest#readme",
   "dependencies": {
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
