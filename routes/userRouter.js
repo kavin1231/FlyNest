@@ -19,7 +19,6 @@ const userRouter = express.Router();
 userRouter.post("/", registerUser);
 userRouter.post("/login", loginUser);
 userRouter.get("/all", getAllUsers);
-
 userRouter.put("/update/:id", updateUser);
 userRouter.delete("/delete/:id", deleteUser);
 userRouter.put("/profile", updateProfile);
