@@ -26,7 +26,10 @@ export async function getAllPayments(req, res) {
   }
 
   try {
-    const payments = await Payment.find().populate("userId", "firstname lastname email");
+    const payments = await Payment.find().populate(
+      "userId",
+      "firstname lastname email"
+    );
     res.status(200).json(payments);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -40,7 +43,10 @@ export async function getPaymentById(req, res) {
   }
 
   try {
-    const payment = await Payment.findById(req.params.id).populate("userId", "firstname lastname email");
+    const payment = await Payment.findById(req.params.id).populate(
+      "userId",
+      "firstname lastname email"
+    );
     if (!payment) return res.status(404).json({ error: "Payment not found" });
     res.status(200).json(payment);
   } catch (error) {
@@ -55,7 +61,9 @@ export async function updatePayment(req, res) {
   }
 
   try {
-    const updated = await Payment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updated = await Payment.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
     if (!updated) return res.status(404).json({ error: "Payment not found" });
     res.status(200).json(updated);
   } catch (error) {
