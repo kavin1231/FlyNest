@@ -1,4 +1,4 @@
-import Passenger from "../models/passenger.js";
+import Passenger from "../models/Passenger.js";
 import { isItCustomer } from "./userController.js";
 
 // Create Passenger – Customer Only
