@@ -76,7 +76,7 @@ export async function getAllBookings(req, res) {
   }
 }
 
-// ✅ Get bookings by user – Customer Only
+// ✅ Get bookings by user – Customer Only (FIXED)
 export async function getBookingsByUser(req, res) {
   const { userId } = req.params;
   if (!isItCustomer(req) || req.user.id !== userId) {
@@ -84,14 +84,15 @@ export async function getBookingsByUser(req, res) {
   }
 
   try {
-    const bookings = await Booking.find({ user: userId });
+    // Fixed: Use userEmail instead of user field since that's what exists in schema
+    const bookings = await Booking.find({ userEmail: req.user.email }).sort({ createdAt: -1 });
     res.status(200).json(bookings);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
 
-// ✅ Admin: Update booking status
+// ✅ Admin: Update booking status (FIXED)
 export async function updateBookingStatus(req, res) {
   if (!isItAdmin(req)) {
     return res.status(403).json({ error: "Access denied" });
@@ -119,13 +120,14 @@ export async function updateBookingStatus(req, res) {
     booking.status = status;
     await booking.save();
 
+    // Return the updated booking directly
     res.status(200).json(booking);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
 
-// ✅ Customer: Cancel own booking
+// ✅ Customer: Cancel own booking (FIXED)
 export async function cancelBookingByCustomer(req, res) {
   if (!isItCustomer(req)) {
     return res
@@ -138,7 +140,8 @@ export async function cancelBookingByCustomer(req, res) {
   try {
     const booking = await Booking.findById(id);
 
-    if (!booking || booking.user.toString() !== req.user.id) {
+    // Fixed: Use userEmail for comparison since that's what exists in schema
+    if (!booking || booking.userEmail !== req.user.email) {
       return res.status(404).json({ error: "Booking not found or not yours" });
     }
 
