@@ -11,7 +11,14 @@ export async function createBooking(req, res) {
   }
 
   try {
-    const { flightId, seatsBooked, passengers, customerName, customerAddress, customerPhone } = req.body;
+    const {
+      flightId,
+      seatsBooked,
+      passengers,
+      customerName,
+      customerAddress,
+      customerPhone,
+    } = req.body;
 
     const flight = await Flight.findById(flightId);
     if (!flight) {
@@ -19,7 +26,9 @@ export async function createBooking(req, res) {
     }
 
     if (!passengers || passengers.length !== seatsBooked) {
-      return res.status(400).json({ error: "Passengers count must match seats booked" });
+      return res
+        .status(400)
+        .json({ error: "Passengers count must match seats booked" });
     }
 
     const totalAmount = flight.price * seatsBooked;
@@ -48,7 +57,6 @@ export async function createBooking(req, res) {
 
     await booking.save();
     res.status(201).json(booking);
-
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -57,11 +65,11 @@ export async function createBooking(req, res) {
 // ✅ Get all bookings – Admin Only
 export async function getAllBookings(req, res) {
   if (!isItAdmin(req)) {
-    return res.status(403).json({ error: "Access denied" });
+    return res.status(403).json({ error: "Only admins can view all bookings" });
   }
 
   try {
-    const bookings = await Booking.find().populate("user", "name email");
+    const bookings = await Booking.find().sort({ createdAt: -1 });
     res.status(200).json(bookings);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -103,7 +111,9 @@ export async function updateBookingStatus(req, res) {
     }
 
     if (["cancelled", "declined"].includes(booking.status)) {
-      return res.status(400).json({ error: "Cannot update a cancelled or declined booking" });
+      return res
+        .status(400)
+        .json({ error: "Cannot update a cancelled or declined booking" });
     }
 
     booking.status = status;
@@ -118,7 +128,9 @@ export async function updateBookingStatus(req, res) {
 // ✅ Customer: Cancel own booking
 export async function cancelBookingByCustomer(req, res) {
   if (!isItCustomer(req)) {
-    return res.status(403).json({ error: "Only customers can cancel bookings" });
+    return res
+      .status(403)
+      .json({ error: "Only customers can cancel bookings" });
   }
 
   const { id } = req.params;
@@ -131,7 +143,9 @@ export async function cancelBookingByCustomer(req, res) {
     }
 
     if (["cancelled", "declined"].includes(booking.status)) {
-      return res.status(400).json({ error: "Booking is already cancelled or declined" });
+      return res
+        .status(400)
+        .json({ error: "Booking is already cancelled or declined" });
     }
 
     booking.status = "cancelled";
