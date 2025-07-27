@@ -12,8 +12,8 @@ const bookingRouter = express.Router();
 bookingRouter.post("/", createBooking);
 bookingRouter.get("/", getAllBookings);
 bookingRouter.get("/me", getBookingsByUser);
-bookingRouter.patch("/:id/cancel", cancelBookingByCustomer);
-bookingRouter.patch("/:id/status", updateBookingStatus);
+bookingRouter.delete("/:id/cancel", cancelBookingByCustomer);
+bookingRouter.put("/:id/status", updateBookingStatus);
 bookingRouter.post("/quote", (req, res) => {
   res.status(501).json({ message: "Quote feature not implemented yet" });
 });
