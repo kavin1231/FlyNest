@@ -1,3 +1,5 @@
+// passengerController.js
+
 import Passenger from "../models/Passenger.js";
 import { isItCustomer } from "./userController.js";
 
@@ -7,7 +9,11 @@ export async function createPassenger(req, res) {
     return res.status(403).json({ error: "Only customers can add passengers" });
 
   try {
-    const passenger = new Passenger({ ...req.body, userId: req.user.id });
+    const passenger = new Passenger({
+      ...req.body,
+      userId: req.user.id,
+    });
+
     await passenger.save();
     res.status(201).json(passenger);
   } catch (error) {
@@ -28,7 +34,7 @@ export async function getMyPassengers(req, res) {
   }
 }
 
-// Get Single Passenger (own) – Customer Only
+// Get Single Passenger by ID – Only Own
 export async function getPassengerById(req, res) {
   if (!isItCustomer(req))
     return res.status(403).json({ error: "Access denied" });
@@ -38,6 +44,7 @@ export async function getPassengerById(req, res) {
       _id: req.params.id,
       userId: req.user.id,
     });
+
     if (!passenger)
       return res.status(404).json({ error: "Passenger not found" });
 
@@ -47,7 +54,7 @@ export async function getPassengerById(req, res) {
   }
 }
 
-// Update Passenger – Customer Only
+// Update Passenger – Only Own
 export async function updatePassenger(req, res) {
   if (!isItCustomer(req))
     return res.status(403).json({ error: "Access denied" });
@@ -59,7 +66,8 @@ export async function updatePassenger(req, res) {
       { new: true }
     );
 
-    if (!updated) return res.status(404).json({ error: "Passenger not found" });
+    if (!updated)
+      return res.status(404).json({ error: "Passenger not found" });
 
     res.status(200).json(updated);
   } catch (error) {
@@ -67,16 +75,20 @@ export async function updatePassenger(req, res) {
   }
 }
 
-// Delete Passenger – Customer Only
+// Delete Passenger – Only Own
 export async function deletePassenger(req, res) {
   if (!isItCustomer(req))
     return res.status(403).json({ error: "Access denied" });
 
   try {
-    await Passenger.findOneAndDelete({
+    const deleted = await Passenger.findOneAndDelete({
       _id: req.params.id,
       userId: req.user.id,
     });
+
+    if (!deleted)
+      return res.status(404).json({ error: "Passenger not found" });
+
     res.status(200).json({ message: "Passenger deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -5,12 +5,17 @@ const flightSchema = new mongoose.Schema(
     flightNumber: {
       type: String,
       required: true,
+      unique: true,
+    },
+    airline: {
+      type: String,
+      default: "Default Airline",
     },
     departure: {
       type: String,
       required: true,
     },
-    destination: {
+    arrival: {
       type: String,
       required: true,
     },
@@ -19,6 +24,10 @@ const flightSchema = new mongoose.Schema(
       required: true,
     },
     arrivalTime: {
+      type: Date,
+      required: true,
+    },
+    date: {
       type: Date,
       required: true,
     },
@@ -34,9 +43,9 @@ const flightSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    airline: {
+    image: {
       type: String,
-      default: "Default Airline",
+      default: "",
     },
     status: {
       type: String,
