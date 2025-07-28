@@ -41,8 +41,8 @@ export async function createFlight(req, res) {
     const newFlight = new Flight({
       flightNumber,
       airline,
-      departure,
-      arrival,
+      departure: departure.toUpperCase(),
+      arrival: arrival.toUpperCase(), 
       departureTime,
       arrivalTime,
       date,
@@ -64,7 +64,8 @@ export async function createFlight(req, res) {
 export async function getAllFlights(req, res) {
   try {
     const flights = await Flight.find();
-    res.status(200).json(flights);
+    const validFlights = flights.filter(f => f.departure && f.arrival && f.date);
+    res.status(200).json(validFlights);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
