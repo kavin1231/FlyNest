@@ -60,7 +60,7 @@ export async function createFlight(req, res) {
   }
 }
 
-// Get All Flights with Search Filtering – Public
+// Get All Flights with Search Filtering – Public (existing function)
 export async function getAllFlights(req, res) {
   try {
     const { from, to, date } = req.query;
@@ -104,6 +104,38 @@ export async function getAllFlights(req, res) {
     res.status(200).json(validFlights);
   } catch (error) {
     console.error("Error fetching flights:", error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+// NEW: Get All Flights for Customers – Public, No Filters
+export async function getAllFlightsCustomer(req, res) {
+  try {
+    console.log("Fetching all flights for customer view...");
+    
+    // Get all scheduled flights with available seats, sorted by departure time
+    const flights = await Flight.find({
+      status: "scheduled",
+      availableSeats: { $gt: 0 }
+    }).sort({ 
+      date: 1,           // Sort by date first
+      departureTime: 1   // Then by departure time
+    });
+    
+    // Filter out flights with invalid data
+    const validFlights = flights.filter(f => 
+      f.departure && 
+      f.arrival && 
+      f.date && 
+      f.departureTime && 
+      f.arrivalTime &&
+      f.price
+    );
+    
+    console.log(`Found ${validFlights.length} valid flights for customers`);
+    res.status(200).json(validFlights);
+  } catch (error) {
+    console.error("Error fetching customer flights:", error);
     res.status(500).json({ error: error.message });
   }
 }
