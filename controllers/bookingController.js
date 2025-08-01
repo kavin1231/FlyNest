@@ -1,16 +1,14 @@
 import Booking from "../models/Booking.js";
 import Flight from "../models/Flight.js";
 import { isItAdmin, isItCustomer } from "./userController.js";
-
-// ✅ Create Booking – Customers Only
 import { v4 as uuidv4 } from "uuid";
 
+// ✅ Create Booking – Customers Only (temporarily allowing any authenticated user)
 export async function createBooking(req, res) {
   console.log("=== BOOKING DEBUG ===");
   console.log("Request user:", req.user);
   console.log("Request headers:", req.headers.authorization);
-  
-  // EMERGENCY FIX: Skip role check temporarily and just check if user exists
+
   if (!req.user) {
     console.log("No user found in request");
     return res.status(401).json({ error: "Authentication required. Please log in." });
@@ -18,11 +16,6 @@ export async function createBooking(req, res) {
 
   console.log("User role:", req.user.role);
   console.log("Is customer check:", isItCustomer(req));
-
-  // TEMPORARY: Allow any authenticated user to create booking
-  // if (!isItCustomer(req)) {
-  //   return res.status(403).json({ error: "Only customers can book flights" });
-  // }
 
   try {
     const {
@@ -43,7 +36,6 @@ export async function createBooking(req, res) {
       customerPhone,
     });
 
-    // Validate required fields
     if (!flightId || !seatsBooked || !passengers) {
       return res.status(400).json({ error: "Missing required booking information" });
     }
@@ -86,7 +78,7 @@ export async function createBooking(req, res) {
     console.log("About to save booking:", booking);
     await booking.save();
     console.log("Booking saved successfully");
-    
+
     res.status(201).json(booking);
   } catch (error) {
     console.error("Booking creation error:", error);
@@ -112,27 +104,34 @@ export async function getAllBookings(req, res) {
   }
 }
 
-// ✅ Get bookings by user – Customer Only (FIXED)
+// ✅ Get bookings by user – Customer Only (supports /me and /user/:userId)
 export async function getBookingsByUser(req, res) {
   if (!req.user) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
-  const { userId } = req.params;
-  if (!isItCustomer(req) || req.user.userId !== userId) {
+  if (!isItCustomer(req)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  const paramUserId = req.params.userId; // from /user/:userId
+
+  if (paramUserId && req.user.userId !== paramUserId) {
     return res.status(403).json({ error: "Access denied" });
   }
 
   try {
-    // Fixed: Use userEmail instead of user field since that's what exists in schema
-    const bookings = await Booking.find({ userEmail: req.user.email }).sort({ createdAt: -1 });
+    // Use userEmail since Booking stores that
+    const bookings = await Booking.find({ userEmail: req.user.email }).sort({
+      createdAt: -1,
+    });
     res.status(200).json(bookings);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
 
-// ✅ Admin: Update booking status (FIXED)
+// ✅ Admin: Update booking status
 export async function updateBookingStatus(req, res) {
   if (!req.user) {
     return res.status(401).json({ error: "Authentication required" });
@@ -165,14 +164,13 @@ export async function updateBookingStatus(req, res) {
     booking.status = status;
     await booking.save();
 
-    // Return the updated booking directly
     res.status(200).json(booking);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
 
-// ✅ Customer: Cancel own booking (FIXED)
+// ✅ Customer: Cancel own booking
 export async function cancelBookingByCustomer(req, res) {
   if (!req.user) {
     return res.status(401).json({ error: "Authentication required" });
@@ -189,7 +187,6 @@ export async function cancelBookingByCustomer(req, res) {
   try {
     const booking = await Booking.findById(id);
 
-    // Fixed: Use userEmail for comparison since that's what exists in schema
     if (!booking || booking.userEmail !== req.user.email) {
       return res.status(404).json({ error: "Booking not found or not yours" });
     }
