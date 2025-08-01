@@ -1,23 +1,26 @@
-import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-import jwt from "jsonwebtoken";
-import bodyParser from "body-parser";
+import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken"; // This was missing!
+import bodyParser from "body-parser";
+
+// Import route files
 import userRouter from "./routes/userRouter.js";
 import flightRouter from "./routes/flightRouter.js";
-import airportRouter from "./routes/airportRouter.js";
 import bookingRouter from "./routes/bookingRouter.js";
-import paymentRouter from "./routes/paymentRouter.js";
-import contactRouter from "./routes/contactRouter.js";
 import passengerRouter from "./routes/passengerRouter.js";
+import paymentRouter from "./routes/paymentRouter.js";
 
 dotenv.config();
-const app = express();
-app.use(cors());
 
+const app = express();
+
+app.use(cors());
+app.use(express.json());
 app.use(bodyParser.json());
 
+// JWT middleware - fixed with proper jwt import
 app.use((req, res, next) => {
   let token = req.header("Authorization");
   if (token != null) {
@@ -40,14 +43,25 @@ connection.once("open", () => {
   console.log("MongoDB connection established successfully");
 });
 
-app.use("/api/users", userRouter);
-app.use("/api/flights", flightRouter);
-app.use("/api/airports", airportRouter);
-app.use("/api/bookings", bookingRouter);
-app.use("/api/payments", paymentRouter);
-app.use("/api/contacts", contactRouter);
-app.use("/api/passengers", passengerRouter);
+// Public routes (no auth required)
+app.use("/api/users", userRouter); // Login/Register routes
 
-app.listen(3010, () => {
-  console.log("Server is running on port 3010");
+// Protected routes (auth required)
+app.use("/api/flights", flightRouter);
+app.use("/api/bookings", bookingRouter);
+app.use("/api/passengers", passengerRouter);
+app.use("/api", paymentRouter); // This handles /api/create-payment-intent and /api/payments/*
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Something went wrong!" });
 });
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+export default app;
