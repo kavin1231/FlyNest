@@ -1,7 +1,5 @@
-// passengerController.js
-
 import Passenger from "../models/Passenger.js";
-import { isItCustomer } from "./userController.js";
+import { isItCustomer, isItAdmin } from "./userController.js";
 import { v4 as uuidv4 } from "uuid";
 
 // Create Passenger – Customer Only
@@ -24,7 +22,6 @@ export async function createPassenger(req, res) {
       gender,
     } = req.body;
 
-    // Basic required validation (schema will also enforce)
     if (
       !firstname ||
       !lastname ||
@@ -38,13 +35,11 @@ export async function createPassenger(req, res) {
         .json({ error: "Missing required passenger fields" });
     }
 
-    // Ensure email looks valid (optional, schema also enforces)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: "Invalid email format" });
     }
 
-    // If passportNumber not provided, generate one to satisfy schema requirement
     const passportNumber = suppliedPassport
       ? suppliedPassport
       : `PP-${uuidv4().split("-")[0].toUpperCase()}`;
@@ -55,7 +50,6 @@ export async function createPassenger(req, res) {
       email,
       phone,
       dateOfBirth,
-      // age will be auto-computed in pre-validate hook if missing
       passportNumber,
       gender,
       userId: req.user.userId,
@@ -64,7 +58,6 @@ export async function createPassenger(req, res) {
     await passenger.save();
     res.status(201).json(passenger);
   } catch (error) {
-    // Duplicate passport number
     if (error.code === 11000 && error.keyPattern?.passportNumber) {
       return res
         .status(409)
@@ -98,7 +91,7 @@ export async function getMyPassengers(req, res) {
   }
 }
 
-// Get Single Passenger by ID – Only Own
+// Get single passenger by ID – only own
 export async function getPassengerById(req, res) {
   if (!isItCustomer(req))
     return res.status(403).json({ error: "Access denied" });
@@ -123,7 +116,7 @@ export async function getPassengerById(req, res) {
   }
 }
 
-// Update Passenger – Only Own
+// Update passenger – only own
 export async function updatePassenger(req, res) {
   if (!isItCustomer(req))
     return res.status(403).json({ error: "Access denied" });
@@ -148,7 +141,7 @@ export async function updatePassenger(req, res) {
   }
 }
 
-// Delete Passenger – Only Own
+// Delete passenger – only own
 export async function deletePassenger(req, res) {
   if (!isItCustomer(req))
     return res.status(403).json({ error: "Access denied" });
@@ -168,6 +161,24 @@ export async function deletePassenger(req, res) {
     res.status(200).json({ message: "Passenger deleted successfully" });
   } catch (error) {
     console.error("deletePassenger error:", error);
+    res.status(500).json({ error: error.message });
+  }
+}
+
+// Admin: get all passengers
+export async function getAllPassengers(req, res) {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  if (!isItAdmin(req)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
+  try {
+    const passengers = await Passenger.find().sort({ createdAt: -1 });
+    res.status(200).json(passengers);
+  } catch (error) {
+    console.error("getAllPassengers error:", error);
     res.status(500).json({ error: error.message });
   }
 }
