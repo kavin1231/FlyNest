@@ -11,7 +11,9 @@ export async function createBooking(req, res) {
 
   if (!req.user) {
     console.log("No user found in request");
-    return res.status(401).json({ error: "Authentication required. Please log in." });
+    return res
+      .status(401)
+      .json({ error: "Authentication required. Please log in." });
   }
 
   console.log("User role:", req.user.role);
@@ -37,7 +39,9 @@ export async function createBooking(req, res) {
     });
 
     if (!flightId || !seatsBooked || !passengers) {
-      return res.status(400).json({ error: "Missing required booking information" });
+      return res
+        .status(400)
+        .json({ error: "Missing required booking information" });
     }
 
     const flight = await Flight.findById(flightId);
@@ -69,7 +73,8 @@ export async function createBooking(req, res) {
         image: flight.image,
       },
       totalAmount,
-      customerName: customerName || `${req.user.firstname} ${req.user.lastname}`,
+      customerName:
+        customerName || `${req.user.firstname} ${req.user.lastname}`,
       customerAddress: customerAddress || "Customer Address",
       customerPhone: customerPhone || req.user.phone || "N/A",
       bookingDate: new Date(),
@@ -138,9 +143,9 @@ export async function updateBookingStatus(req, res) {
   }
 
   // TEMPORARY: Allow any authenticated user to update booking status
-  // if (!isItAdmin(req)) {
-  //   return res.status(403).json({ error: "Access denied" });
-  // }
+  if (!isItAdmin(req)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
 
   const { id } = req.params;
   const { status } = req.body;

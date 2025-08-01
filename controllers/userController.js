@@ -249,9 +249,9 @@ export async function getUsersByRole(req, res) {
 }
 
 export function isItAdmin(req) {
-  return req.user?.role === "admin";
+  return req.user && req.user.role === "admin";
 }
 
 export function isItCustomer(req) {
-  return req.user?.role === "customer";
+  return req.user && req.user.role === "customer";
 }
