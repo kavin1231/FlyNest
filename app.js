@@ -11,6 +11,7 @@ import flightRouter from "./routes/flightRouter.js";
 import bookingRouter from "./routes/bookingRouter.js";
 import passengerRouter from "./routes/passengerRouter.js";
 import paymentRouter from "./routes/paymentRouter.js";
+import contactRouter from "./routes/contactRouter.js";
 
 dotenv.config();
 
@@ -50,7 +51,8 @@ app.use("/api/users", userRouter); // Login/Register routes
 app.use("/api/flights", flightRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/api/passengers", passengerRouter);
-app.use("/api", paymentRouter); // This handles /api/create-payment-intent and /api/payments/*
+app.use("/api", paymentRouter);
+app.use("/api/contacts", contactRouter); // This handles /api/create-payment-intent and /api/payments/*
 
 // Error handling middleware
 app.use((err, req, res, next) => {
