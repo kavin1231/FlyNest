@@ -60,46 +60,95 @@ export async function createFlight(req, res) {
   }
 }
 
-// Get All Flights with Search Filtering – Public (existing function)
+// Get All Flights with Search Filtering – Public (FIXED)
 export async function getAllFlights(req, res) {
   try {
     const { from, to, date } = req.query;
     
+    console.log("Search parameters received:", { from, to, date });
+    
     // Build query object
     let query = {};
     
-    // Add search filters if provided
+    // Add search filters if provided - no need to convert to uppercase since DB already has uppercase
     if (from) {
-      query.departure = from.toUpperCase();
+      query.departure = from;
     }
     
     if (to) {
-      query.arrival = to.toUpperCase();
+      query.arrival = to;
     }
     
     if (date) {
-      // Parse the date and create a range for the entire day
+      // Parse the date properly - expecting YYYY-MM-DD format from frontend
       const searchDate = new Date(date);
-      const startOfDay = new Date(searchDate);
-      startOfDay.setHours(0, 0, 0, 0);
       
-      const endOfDay = new Date(searchDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Create date range for the entire day in UTC
+      const startOfDay = new Date(date + 'T00:00:00.000Z');
+      const endOfDay = new Date(date + 'T23:59:59.999Z');
       
       query.date = {
         $gte: startOfDay,
         $lte: endOfDay
       };
+      
+      console.log("Date filter:", {
+        inputDate: date,
+        searchDate: searchDate.toISOString(),
+        startOfDay: startOfDay.toISOString(),
+        endOfDay: endOfDay.toISOString()
+      });
     }
     
     // Only show scheduled flights with available seats
     query.status = "scheduled";
     query.availableSeats = { $gt: 0 };
     
-    const flights = await Flight.find(query).sort({ departureTime: 1 });
+    console.log("Final query:", JSON.stringify(query, null, 2));
+    
+    // First, let's see what dates we actually have in the database
+    const allFlights = await Flight.find({ status: "scheduled" });
+    console.log("All scheduled flights details:", allFlights.map(f => ({ 
+      flightNumber: f.flightNumber, 
+      departure: f.departure, 
+      arrival: f.arrival, 
+      date: f.date?.toISOString(),
+      availableSeats: f.availableSeats,
+      status: f.status
+    })));
+    
+    // Let's also test without date filter first
+    if (from && to) {
+      const flightsWithoutDate = await Flight.find({
+        departure: from,
+        arrival: to,
+        status: "scheduled",
+        availableSeats: { $gt: 0 }
+      });
+      console.log(`Flights matching route (${from} → ${to}) without date filter:`, flightsWithoutDate.length);
+      console.log("Route matches:", flightsWithoutDate.map(f => ({ 
+        flightNumber: f.flightNumber, 
+        date: f.date?.toISOString() 
+      })));
+    }
+    
+    const flights = await Flight.find(query).sort({ 
+      date: 1,           // Sort by date first
+      departureTime: 1   // Then by departure time
+    });
+    
+    console.log(`Found ${flights.length} flights matching full criteria`);
+    console.log("Matching flights:", flights.map(f => ({ 
+      flightNumber: f.flightNumber, 
+      departure: f.departure, 
+      arrival: f.arrival, 
+      date: f.date?.toISOString() 
+    })));
     
     // Filter out flights with invalid data
     const validFlights = flights.filter(f => f.departure && f.arrival && f.date);
+    
+    console.log(`Returning ${validFlights.length} valid flights`);
     
     res.status(200).json(validFlights);
   } catch (error) {
@@ -108,7 +157,7 @@ export async function getAllFlights(req, res) {
   }
 }
 
-// NEW: Get All Flights for Customers – Public, No Filters
+// Get All Flights for Customers – Public, No Filters
 export async function getAllFlightsCustomer(req, res) {
   try {
     console.log("Fetching all flights for customer view...");
@@ -147,7 +196,10 @@ export async function getAllFlightsAdmin(req, res) {
   }
 
   try {
-    const flights = await Flight.find();
+    const flights = await Flight.find().sort({ 
+      date: 1,           // Sort by date first
+      departureTime: 1   // Then by departure time
+    });
     res.status(200).json(flights);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -174,10 +226,19 @@ export async function updateFlight(req, res) {
   }
 
   try {
+    // Convert departure and arrival to uppercase if they exist in the update
+    const updateData = { ...req.body };
+    if (updateData.departure) {
+      updateData.departure = updateData.departure.toUpperCase();
+    }
+    if (updateData.arrival) {
+      updateData.arrival = updateData.arrival.toUpperCase();
+    }
+
     const updatedFlight = await Flight.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      updateData,
+      { new: true, runValidators: true }
     );
     if (!updatedFlight) {
       return res.status(404).json({ error: "Flight not found" });
