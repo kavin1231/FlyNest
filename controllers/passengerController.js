@@ -59,11 +59,9 @@ export async function createPassenger(req, res) {
     res.status(201).json(passenger);
   } catch (error) {
     if (error.code === 11000 && error.keyPattern?.passportNumber) {
-      return res
-        .status(409)
-        .json({
-          error: "Passport number already exists for another passenger",
-        });
+      return res.status(409).json({
+        error: "Passport number already exists for another passenger",
+      });
     }
 
     console.error("createPassenger error:", error);
@@ -141,20 +139,24 @@ export async function updatePassenger(req, res) {
   }
 }
 
-// Delete passenger – only own
 export async function deletePassenger(req, res) {
-  if (!isItCustomer(req))
-    return res.status(403).json({ error: "Access denied" });
-
   if (!req.user || !req.user.userId) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
+  const isCustomer = isItCustomer(req);
+  const isAdmin = isItAdmin(req);
+
+  if (!isCustomer && !isAdmin) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+
   try {
-    const deleted = await Passenger.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user.userId,
-    });
+    const query = isAdmin
+      ? { _id: req.params.id } // Admins can delete any passenger
+      : { _id: req.params.id, userId: req.user.userId }; // Customers can delete only their own
+
+    const deleted = await Passenger.findOneAndDelete(query);
 
     if (!deleted) return res.status(404).json({ error: "Passenger not found" });
 
